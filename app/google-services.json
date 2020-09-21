@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1095396692328",
+    "firebase_url": "https://upsc-quiz-db.firebaseio.com",
+    "project_id": "upsc-quiz-db",
+    "storage_bucket": "upsc-quiz-db.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1095396692328:android:d6d4e097be8194cd9906dd",
+        "android_client_info": {
+          "package_name": "com.example.upscquiz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1095396692328-0ph4itgi76r3sn4psfqig2s5sdem787a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzMeWldu7HFH2V4_opHUT40IQmH0xj6r0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1095396692328-0ph4itgi76r3sn4psfqig2s5sdem787a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
