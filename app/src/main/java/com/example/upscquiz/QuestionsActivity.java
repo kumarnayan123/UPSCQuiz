@@ -7,7 +7,9 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.animation.Animator;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
@@ -25,12 +27,16 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 public class QuestionsActivity extends AppCompatActivity {
-
+    public static final String FILE_NAME = "UPSC_QUIZ";
+    public static final String KEY_NAME = "QUESTIONS";
     private TextView Question,noindicator;
     private FloatingActionButton bookmarkBtn;
     private LinearLayout optionsContainer;
@@ -41,6 +47,11 @@ public class QuestionsActivity extends AppCompatActivity {
     private int score = 0;
     private String category;
     private int setNo;
+    private SharedPreferences preference;
+    private SharedPreferences.Editor editor;
+    private Gson gson;
+    private List<QuestionModel> Bmlist;
+
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference();
 
@@ -66,8 +77,25 @@ public class QuestionsActivity extends AppCompatActivity {
         optionsContainer = findViewById(R.id.optionsContainer);
         shareBtn = findViewById(R.id.share_btn);
         nextBtn = findViewById(R.id.next_btn);
-
+        
         list = new ArrayList<>();
+
+        preference = getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE);
+        editor = preference.edit();
+        gson = new Gson();
+        getBookmarks();
+
+        bookmarkBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ifBookmarked()){
+                    Toast.makeText(QuestionsActivity.this,"Already Bookmarked",Toast.LENGTH_LONG).show();
+                }else{
+                   Bmlist.add(list.get(position));
+                }
+            }
+        });
+
 
         category = getIntent().getStringExtra("category");
         setNo = getIntent().getIntExtra("sets",1);
@@ -80,7 +108,6 @@ public class QuestionsActivity extends AppCompatActivity {
                     list.add(datasnapshot.getValue(QuestionModel.class));
                 }
                 if(list.size() > 0){
-
                     for(int i = 0;i < 4; i++){
                         optionsContainer.getChildAt(i).setOnClickListener(new View.OnClickListener() {
                             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -90,6 +117,7 @@ public class QuestionsActivity extends AppCompatActivity {
                             }
                         });
                     }
+
                     playAnim(Question, 0, list.get(position).getQuestion());
                     noindicator.setText((position+1)+"/"+list.size());
                     nextBtn.setOnClickListener(new View.OnClickListener() {
@@ -113,10 +141,23 @@ public class QuestionsActivity extends AppCompatActivity {
                             noindicator.setText((position+1)+"/"+list.size());
                         }
                     });
+                    shareBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String shareString = list.get(position).getQuestion()+"\n"+"Choose the correct one :"+"\n1."+list.get(position).getOption1();
+                            Intent shareIntenet = new Intent(Intent.ACTION_SEND);
+                            shareIntenet.setType("text/plain");
+                            shareIntenet.putExtra(Intent.EXTRA_SUBJECT,"Quizzer Challenge");
+                            shareIntenet.putExtra(Intent.EXTRA_TEXT,shareString);
+                            startActivity(Intent.createChooser(shareIntenet,"share via"));
+                        }
+                    });
                 }
                 else{
+
+                    Toast.makeText(QuestionsActivity.this,"no questions added",Toast.LENGTH_LONG);
+
                     finish();
-                    Toast.makeText(QuestionsActivity.this,"no questions added",Toast.LENGTH_SHORT);
                 }
                 loadingDialog.dismiss();
             }
@@ -128,6 +169,12 @@ public class QuestionsActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        storeBookmarks();
     }
 
     private void playAnim(final View view, final int value, final String data){
@@ -199,5 +246,27 @@ public class QuestionsActivity extends AppCompatActivity {
                 optionsContainer.getChildAt(i).setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#989898")));
             }
         }
+    }
+    private void getBookmarks(){
+        String json =  preference.getString(KEY_NAME,"");
+        Type type = new TypeToken<List<QuestionModel>>(){}.getType();
+        Bmlist = gson.fromJson(json,type);
+        if(Bmlist == null){
+            Bmlist = new ArrayList<>();
+        }
+    }
+    private void storeBookmarks(){
+        String json = gson.toJson(Bmlist);
+        editor.putString(KEY_NAME,json);
+        editor.commit();
+    }
+    private boolean ifBookmarked(){
+        boolean match = false;
+        for(QuestionModel model : Bmlist){
+            if(model.getQuestion().equals(list.get(position).getQuestion())){
+                match = true;
+            }
+        }
+        return match;
     }
 }
